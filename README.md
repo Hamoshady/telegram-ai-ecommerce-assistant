@@ -1,105 +1,125 @@
-# مساعد متجر إلكتروني عبر تيليجرام
+# Telegram AI E-commerce Assistant
 
-## اسم المستودع المقترح
+An Arabic-language Telegram bot for interacting with an e-commerce catalog and managing customer orders. The bot uses a locally hosted Ollama model to interpret messages, an MCP server to expose store operations, and PostgreSQL to store products and orders.
 
-`telegram-ai-ecommerce-assistant`
+## Features
 
-اسم واضح وسهل البحث، ويصف المشروع: مساعد تجارة إلكترونية يعمل عبر تيليجرام ويستخدم الذكاء الاصطناعي.
+- Search the product catalog using Arabic or English queries.
+- Create orders using a product SKU.
+- Check order status and cancel eligible orders.
+- List orders associated with a Telegram user.
+- Run language-model inference locally through Ollama.
 
-## نبذة
+## Architecture
 
-بوت تيليجرام عربي للتفاعل مع متجر إلكتروني. يفهم طلب المستخدم باستخدام نموذج `llama3` المحلي عبر Ollama، ثم يوجّه الطلب إلى الأدوات المناسبة من خادم MCP. تُخزّن بيانات المنتجات والطلبيات في PostgreSQL.
+```text
+Telegram user
+    │
+    ▼
+Telegram bot ──► Ollama (llama3)
+    │
+    ▼
+MCP server ──► PostgreSQL
+```
 
-يدعم المشروع:
+The Telegram client starts the MCP server as a subprocess. The server provides the store tools and reads database and Telegram configuration from environment variables.
 
-- البحث عن المنتجات بالعربية أو الإنجليزية.
-- إنشاء طلبية باستخدام رمز المنتج (SKU).
-- متابعة حالة الطلبية أو إلغاؤها.
-- عرض طلبيات مستخدم تيليجرام.
+## Tech Stack
 
-## مكوّنات المشروع
+- Python 3.14
+- [uv](https://docs.astral.sh/uv/) for Python project and dependency management
+- [python-telegram-bot](https://python-telegram-bot.org/)
+- [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
+- [Ollama](https://ollama.com/) with the `llama3` model
+- PostgreSQL
 
-- **Telegram Bot** لاستقبال رسائل المستخدم والرد عليها.
-- **Ollama (`llama3`)** لتصنيف الرسالة إلى إجراء مناسب.
-- **MCP server** لتوفير أدوات المتجر وموارده.
-- **PostgreSQL** لتخزين المنتجات والطلبيات.
-- **uv** لإدارة بيئة Python واعتماديات المشروع.
+## Requirements
 
-## المتطلبات
+Before running the project, install or configure:
 
-- Python 3.14.
-- [`uv`](https://docs.astral.sh/uv/).
-- PostgreSQL.
-- [Ollama](https://ollama.com/) مع نموذج `llama3`.
-- بوت تيليجرام ورمز الوصول الخاص به من BotFather.
+- Python 3.14
+- `uv`
+- PostgreSQL, with a database user that can create the project database during initial setup
+- Ollama, with the `llama3` model available locally
+- A Telegram bot token created through [BotFather](https://t.me/BotFather)
 
-## الإعداد والتشغيل
+## Getting Started
 
-1. نزّل المشروع وثبّت اعتمادياته:
+### 1. Clone the repository
 
-   ```bash
-   git clone <رابط-المستودع>
-   cd <مجلد-المشروع>
-   uv sync
-   ```
+```bash
+git clone <repository-url>
+cd <repository-directory>
+```
 
-2. شغّل Ollama ونزّل النموذج المطلوب:
+### 2. Install dependencies
 
-   ```bash
-   ollama pull llama3
-   ```
+```bash
+uv sync
+```
 
-   اترك خدمة Ollama تعمل أثناء تشغيل البوت.
+### 3. Download the Ollama model
 
-3. أنشئ ملف `.env` في مجلد المشروع وأضف إعدادات PostgreSQL ورمز البوت:
+```bash
+ollama pull llama3
+```
 
-   ```dotenv
-   DB_USER=اسم_مستخدم_قاعدة_البيانات
-   DB_PASSWORD=كلمة_المرور
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=ecommerce
-   TELEGRAM_TOKEN=رمز_بوت_تيليجرام
-   ```
+Ensure the Ollama service is running before starting the bot.
 
-   يحتاج مستخدم PostgreSQL إلى صلاحية إنشاء قاعدة البيانات عند تهيئة المشروع لأول مرة. لا ترفع ملف `.env` أو أي رموز وصول إلى المستودع.
+### 4. Configure environment variables
 
-4. أنشئ قاعدة البيانات والجداول وأضف بيانات المنتجات التجريبية:
+Create a `.env` file in the project root:
 
-   ```bash
-   uv run python db_functions_test.py
-   ```
+```dotenv
+DB_USER=your_postgres_user
+DB_PASSWORD=your_postgres_password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ecommerce
+TELEGRAM_TOKEN=your_telegram_bot_token
+```
 
-5. شغّل البوت:
+Use your own PostgreSQL credentials and Telegram token. The `.env` file is excluded from Git; never commit secrets or production credentials.
 
-   ```bash
-   uv run python ecommerce_Telegram_client.py
-   ```
+### 5. Initialize the database and sample catalog
 
-   يطلق عميل تيليجرام خادم MCP تلقائيًا باستخدام `uv`. أوقف البوت باستخدام `Ctrl+C`.
+```bash
+uv run python db_functions_test.py
+```
 
-## أمثلة للاستخدام
+This script creates the configured database and tables, then inserts sample products. Run it with a PostgreSQL account that has permission to create the database.
 
-أرسل للبوت رسائل مثل:
+### 6. Start the bot
 
-- «اعرض لي هواتف سامسونج»
-- «أريد طلب المنتج SAM-S24-BLK»
-- «ما حالة الطلبية ORD-2026-00001؟»
-- «ألغِ الطلبية ORD-2026-00001»
-- «اعرض طلباتي»
+```bash
+uv run python ecommerce_Telegram_client.py
+```
 
-## ملفات المشروع
+The bot starts polling for text messages and launches the MCP server when it handles requests. Press `Ctrl+C` to stop the process.
 
-| الملف | الوصف |
+## Example Requests
+
+Try sending messages such as:
+
+- “Show me Samsung phones.”
+- “I want to order product SAM-S24-BLK.”
+- “What is the status of order ORD-2026-00001?”
+- “Cancel order ORD-2026-00001.”
+- “Show me my orders.”
+
+## Project Structure
+
+| File | Description |
 |---|---|
-| `ecommerce_Telegram_client.py` | تشغيل بوت تيليجرام والتواصل مع Ollama وخادم MCP. |
-| `ecommerce_server.py` | خادم MCP وموارد المتجر وأدوات البحث والطلبات. |
-| `db_functions.py` | إنشاء قاعدة البيانات والجداول وإدخال المنتجات. |
-| `db_functions_test.py` | تهيئة قاعدة البيانات وإضافة بيانات المنتجات التجريبية. |
-| `ecommerce_data.txt` | نصوص إرشادية تظهر في ردود البوت. |
+| `ecommerce_Telegram_client.py` | Telegram bot entry point and integration with Ollama and the MCP server. |
+| `ecommerce_server.py` | MCP server, store resources, and product and order tools. |
+| `db_functions.py` | PostgreSQL database, table, and product initialization helpers. |
+| `db_functions_test.py` | Database setup script and sample product data. |
+| `ecommerce_data.txt` | Store information included in bot responses. |
 
-## ملاحظات
+## Configuration and Security
 
-- يجب أن تكون PostgreSQL وOllama متاحتين أثناء تشغيل البوت.
-- بيانات المنتجات في `db_functions_test.py` مخصصة للتجربة؛ عدّلها أو استبدلها ببيانات متجرك قبل الاستخدام الفعلي.
-- لا تستخدم بيانات اعتماد حقيقية في ملفات مرفوعة إلى GitHub. أضف القيم السرية محليًا في `.env`.
+- Keep PostgreSQL and Ollama available while the bot is running.
+- Treat the sample catalog as development data; replace it with your own catalog before deployment.
+- Keep `.env` out of version control and use appropriately restricted PostgreSQL credentials.
+- Do not expose your Telegram bot token in logs, screenshots, or public repositories.
