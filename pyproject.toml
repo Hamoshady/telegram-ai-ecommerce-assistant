@@ -1,0 +1,22 @@
+[project]
+name = "u04"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Hamoshady", email = "sm165901@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "mcp[cli]<2",
+    "ollama>=0.6.3",
+    "psycopg2-binary>=2.9.13",
+    "python-telegram-bot>=22.8",
+]
+
+[project.scripts]
+u04 = "u04:main"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
